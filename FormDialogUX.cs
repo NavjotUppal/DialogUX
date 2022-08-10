@@ -21,9 +21,47 @@ namespace DialogUX
         }
         static int rowSize = 8;
         static int columnSize = 3;
-        string[,] employees=new string[rowSize, columnSize];
+        string[,] employees = new string[rowSize, columnSize];
         string defaultFileName = "default.bin";
 
+        private void buttonOpen_Click(object sender, EventArgs e)
+        {
+            OpenFileDialog openFileDialog = new OpenFileDialog();
+            openFileDialog.InitialDirectory = Application.StartupPath;
+            openFileDialog.Filter = "BIN FILES|*.bin";
+            openFileDialog.Title = "Open a BIN File";
+            if(openFileDialog.ShowDialog() == DialogResult.OK)
+            {
+                OpenRecord(openFileDialog.FileName);
+            }
+        }
+        private void OpenRecord(string openFileName)
+        {
+            try
+            {
+                using (Stream stream = File.Open(openFileName, FileMode.Open))
+                {
+                    using (var reader = new BinaryReader(stream,Encoding.UTF8,false))
+                    {
+                        int x = 0;
+                        Array.Clear(employees, 0,employees.Length); // clear 2d array
+                        while(stream.Position<stream.Length)
+                        {
+                            for(int y=0;y<columnSize;y++)
+                            {
+                                employees[x,y] = reader.ReadString();
+                            }
+                            x++;
+                        }
+                    }
+                }
+            }
+            catch (IOException ex)
+            {
+                MessageBox.Show(ex.ToString());
+            }
+            DisplayEmployees();
+        }
         private void buttonSave_Click(object sender, EventArgs e)
         {
             SaveFileDialog saveFileDialog = new SaveFileDialog();
@@ -44,23 +82,35 @@ namespace DialogUX
         }
         private void SaveRecord(String saveFileName)
         {
-            try 
+            try
             {
-                using (Stream stream = File.Open(saveFileName,FileMode.Create))
+                using (Stream stream = File.Open(saveFileName, FileMode.Create))
                 {
-                    BinaryFormatter bin=new BinaryFormatter();
+                    /* BinaryFormatter bin=new BinaryFormatter();
+                      {
+                          for(int y=0; y<columnSize; y++)
+                          {
+                              for(int x=0; x<rowSize; x++)
+                              {
+                                  bin.Serialize(stream, employees[x, y]);
+                              }
+                          }
+                      
+                    */
+
+                    using (var writer = new BinaryWriter(stream, Encoding.UTF8, false))
                     {
-                        for(int y=0; y<columnSize; y++)
+                        for (int x = 0; x < rowSize; x++)
                         {
-                            for(int x=0; x<rowSize; x++)
+                            for (int y = 0; y < columnSize; y++)
                             {
-                                bin.Serialize(stream, employees[x, y]);
+                                writer.Write(employees[x, y]);
                             }
                         }
                     }
                 }
             }
-            catch(IOException ex)
+            catch (IOException ex)
             {
                 MessageBox.Show(ex.ToString());
             }
@@ -91,7 +141,7 @@ namespace DialogUX
                     }
 
                 }
-                else
+                if(x==rowSize-1)
                 { 
                     MessageBox.Show("The array is full", "Array is FULL");
                 }
@@ -125,6 +175,6 @@ namespace DialogUX
             InitialiseArray();
         }
 
-        
+       
     }
 }
